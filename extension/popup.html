@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>VocabRadar</title>
+    <style>
+      :root {
+        --fg: #222; --muted: #888; --line: #eee;
+        --learning: #c98a00; --familiar: #1f4f88; --graduated: #1f6b1f;
+        --danger: #b00020; --ok: #1f6b1f;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 13px; margin: 0; padding: 14px 16px; width: 280px; color: var(--fg);
+      }
+      h1 { font-size: 14px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+      h1 .ver { font-size: 10px; color: var(--muted); font-weight: normal; }
+
+      .section { margin: 14px 0; }
+      .section-title {
+        font-size: 11px; color: var(--muted); margin-bottom: 6px;
+        text-transform: uppercase; letter-spacing: 0.04em;
+      }
+      .header-row {
+        display: flex; align-items: center; justify-content: space-between;
+      }
+
+      .row { display: flex; align-items: center; justify-content: space-between; margin: 6px 0; }
+      .row label { font-size: 12px; color: #555; }
+      input[type="password"], input[type="text"], select {
+        font: inherit; padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px;
+        background: #fff;
+      }
+      input[type="password"], input[type="text"] {
+        flex: 1; min-width: 0; margin-right: 6px;
+      }
+      .key-row { display: flex; align-items: center; }
+
+      button {
+        font: inherit; cursor: pointer; border: 1px solid #ddd; background: #fafafa;
+        padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+      }
+      button:hover { background: #f0f0f0; }
+      button:disabled { opacity: .5; cursor: not-allowed; }
+      button.primary { background: #1f4f88; color: #fff; border-color: #1f4f88; }
+      button.primary:hover { background: #1a4374; }
+
+      .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+      .hint a { color: var(--familiar); }
+      .status-msg { font-size: 11px; margin-top: 4px; }
+      .status-msg.ok { color: var(--ok); }
+      .status-msg.err { color: var(--danger); }
+
+      /* Stats */
+      .total {
+        display: flex; align-items: baseline; justify-content: space-between;
+        padding-bottom: 6px; border-bottom: 1px solid var(--line);
+      }
+      .total .num { font-size: 22px; font-weight: 600; }
+      .total .lbl { font-size: 11px; color: var(--muted); }
+      .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 6px; }
+      .stat { display: flex; align-items: center; justify-content: space-between; }
+      .stat .k { font-size: 12px; color: var(--muted); }
+      .stat .v { font-size: 13px; font-weight: 600; }
+      .stat[data-tier="learning"] .v { color: var(--learning); }
+      .stat[data-tier="familiar"] .v { color: var(--familiar); }
+      .stat[data-tier="graduated"] .v { color: var(--graduated); }
+      .today {
+        margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line);
+        display: flex; justify-content: space-between; align-items: baseline;
+      }
+      .today .k { font-size: 12px; color: var(--muted); }
+      .today .v { font-size: 16px; font-weight: 600; }
+      .skeleton {
+        display: inline-block; height: 14px; width: 30px; border-radius: 4px;
+        background: linear-gradient(90deg, #eee, #f6f6f6, #eee);
+        background-size: 200% 100%; animation: vr-shimmer 1.2s infinite;
+      }
+      @keyframes vr-shimmer { 0% { background-position: 200% 0;} 100% { background-position: -200% 0;} }
+
+      .refresh {
+        cursor: pointer; border: 0; background: transparent; padding: 2px 4px;
+        font-size: 12px; color: var(--muted);
+      }
+      .refresh:hover { color: var(--fg); }
+
+      .no-key-banner {
+        background: #fff8e1; color: #6b5300; padding: 8px 10px; border-radius: 6px;
+        font-size: 12px; margin-bottom: 12px; line-height: 1.5;
+      }
+      .no-key-banner .hl { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>VocabRadar <span class="ver">v0.2</span></h1>
+
+    <div id="noKeyBanner" class="no-key-banner" hidden>
+      <span class="hl">尚未设置 API key</span><br/>
+      在下面 <b>API Key</b> 区粘贴你的 DeepSeek key 即可开始使用。
+    </div>
+
+    <!-- 统计 -->
+    <div class="section">
+      <div class="header-row">
+        <div class="section-title">词汇统计</div>
+        <button class="refresh" id="btnRefresh" title="刷新">↻</button>
+      </div>
+      <div class="total">
+        <span class="num" id="totalNum"><span class="skeleton"></span></span>
+        <span class="lbl">总词数</span>
+      </div>
+      <div class="breakdown">
+        <div class="stat" data-tier="learning"><span class="k">学习中</span><span class="v" id="learning"><span class="skeleton"></span></span></div>
+        <div class="stat" data-tier="familiar"><span class="k">已认识</span><span class="v" id="familiar"><span class="skeleton"></span></span></div>
+        <div class="stat" data-tier="graduated"><span class="k">已掌握</span><span class="v" id="graduated"><span class="skeleton"></span></span></div>
+        <div class="stat"><span class="k">高亮中</span><span class="v" id="highlightNum"><span class="skeleton"></span></span></div>
+      </div>
+      <div class="today">
+        <span class="k">今日查询</span>
+        <span class="v" id="todayNum"><span class="skeleton"></span></span>
+      </div>
+    </div>
+
+    <!-- API Key -->
+    <div class="section">
+      <div class="section-title">API Key (DeepSeek)</div>
+      <div class="key-row">
+        <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
+        <button id="btnTest">测试</button>
+      </div>
+      <div class="status-msg" id="keyStatus" hidden></div>
+      <div class="hint">
+        <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 创建 key；建议为本插件单独建一个并设置月度限额。Key 只存在你浏览器本地。
+      </div>
+    </div>
+
+    <!-- 语言对 -->
+    <div class="section">
+      <div class="section-title">语言对</div>
+      <div class="row">
+        <label>阅读语言</label>
+        <select id="sourceLang"></select>
+      </div>
+      <div class="row">
+        <label>释义语言</label>
+        <select id="targetLang"></select>
+      </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

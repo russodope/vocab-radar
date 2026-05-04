@@ -1,0 +1,14 @@
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# 扩展打包产物
+extension/dist/
+*.zip
+*.crx
+*.pem
+
+# 临时
+.cache/
+tmp/

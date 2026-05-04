@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "VocabRadar",
+  "version": "0.2.0",
+  "description": "划词查英文，自动追踪个人词汇成长。完全本地存储，BYOK（自带 DeepSeek key）。",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://api.deepseek.com/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VocabRadar"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["onboarding.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
