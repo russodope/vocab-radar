@@ -37,7 +37,7 @@
 **步骤一：拿到代码**
 
 ```bash
-git clone https://github.com/<你的用户名>/vocab-radar.git
+git clone https://github.com/russodope/vocab-radar.git
 ```
 
 或者直接 Download ZIP。
