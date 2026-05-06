@@ -24,10 +24,25 @@ chrome.runtime.onConnect.addListener((port) => {
     try {
       // 1) 写 lookup_events + upsert words（与原后端 /translate 同序）
       await logLookupEvent({ word, context, sourceUrl, pageTitle });
-      const meta = await upsertWord({ word, context, sourceUrl });
+      const upsertResult = await upsertWord({ word, context, sourceUrl });
+      const meta = { status: upsertResult.status, lookup_count: upsertResult.lookup_count };
+      const cachedTranslation = upsertResult.cachedTranslation;
 
       // 2) 把 meta 包成 SSE 格式发给 content.js（保持原协议不变）
       port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify({ meta })}\n\n` });
+
+      // 2.5) 缓存命中：之前查过且翻译还在 → 直接 fake-stream 缓存内容，0 API 调用
+      if (cachedTranslation) {
+        const fakeChunk = {
+          choices: [{ delta: { content: cachedTranslation }, finish_reason: 'stop' }],
+        };
+        port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify(fakeChunk)}\n\n` });
+        port.postMessage({ type: 'chunk', data: 'data: [DONE]\n\n' });
+        port.postMessage({ type: 'done' });
+        console.log(`[VocabRadar] 缓存命中 word="${word}" 跳过 DeepSeek 调用`);
+        try { port.disconnect(); } catch (_) {}
+        return;
+      }
 
       // 3) 校验 settings.apiKey 存在；不存在直接报错
       const settings = await getSettings();

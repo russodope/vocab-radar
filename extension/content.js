@@ -79,13 +79,8 @@
       .badge.stuck { background: #ffd580; color: #7a4a00; }
       .badge.fam   { background: #d6eaff; color: #1f4f88; }
       .badge.grad  { background: #d4f7d4; color: #1f6b1f; }
-      .del {
-        background: transparent; border: 1px solid transparent; color: #888;
-        font-size: 16px; padding: 2px 8px; cursor: pointer;
-        margin-left: 6px; line-height: 1; border-radius: 4px;
-        font-weight: 600;
-      }
-      .del:hover { color: #b00020; background: #fee; border-color: #fcc; }
+      .del-btn { color: #888; }
+      .del-btn:hover { color: #b00020; background: #fee5e5; border-color: #fcc; }
       .section { margin-top: 8px; }
       .label { font-size: 11px; color: #888; margin-bottom: 2px; }
       .definition { font-size: 14px; color: #111; }
@@ -120,7 +115,6 @@
       <div class="head">
         <span class="word"></span>
         <span class="badge fresh" data-role="badge">…</span>
-        <button class="del" data-role="delete" title="从词库彻底删除（误操作时用）">✕</button>
       </div>
       <div class="section">
         <div class="label">中文释义</div>
@@ -138,6 +132,7 @@
       <div class="actions">
         <button data-role="known">我认识了</button>
         <button data-role="graduated" class="grad-btn">完全掌握</button>
+        <button data-role="delete" class="del-btn" title="从词库彻底删除（误操作时用）">不用记</button>
         <button data-role="close">关闭</button>
       </div>
     `;

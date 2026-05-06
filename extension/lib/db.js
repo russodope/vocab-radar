@@ -70,7 +70,9 @@ export async function logLookupEvent({ word, context, sourceUrl, pageTitle }) {
   await txDone(tx);
 }
 
-// ---- upsert_word: 单事务 read-modify-write，原子拿回 (status, lookup_count)
+// ---- upsert_word: 单事务 read-modify-write
+// 返回：(status, lookup_count, cachedTranslation)
+//   cachedTranslation = upsert 之前已存在的 translation 字段（用于跳过重复 LLM 调用）
 export async function upsertWord({ word, context, sourceUrl }) {
   const db = await getDb();
   const tx = db.transaction(['words'], 'readwrite');
@@ -99,7 +101,11 @@ export async function upsertWord({ word, context, sourceUrl }) {
   }
   store.put(row);
   await txDone(tx);
-  return { status: row.status, lookup_count: row.lookup_count };
+  return {
+    status: row.status,
+    lookup_count: row.lookup_count,
+    cachedTranslation: existing?.translation || null,
+  };
 }
 
 // ---- save_translation: 翻译流结束后存进 words.translation
