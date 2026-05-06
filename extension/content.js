@@ -68,7 +68,8 @@
         max-width: 380px;
         word-wrap: break-word;
       }
-      .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+      .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .word { flex: 1; min-width: 0; }
       .word { font-size: 16px; font-weight: 600; color: #1a1a1a; }
       .badge {
         font-size: 11px; padding: 2px 8px; border-radius: 999px;
@@ -79,11 +80,12 @@
       .badge.fam   { background: #d6eaff; color: #1f4f88; }
       .badge.grad  { background: #d4f7d4; color: #1f6b1f; }
       .del {
-        background: transparent; border: 0; color: #aaa;
-        font-size: 14px; padding: 0 4px; cursor: pointer;
-        margin-left: 4px; line-height: 1;
+        background: transparent; border: 1px solid transparent; color: #888;
+        font-size: 16px; padding: 2px 8px; cursor: pointer;
+        margin-left: 6px; line-height: 1; border-radius: 4px;
+        font-weight: 600;
       }
-      .del:hover { color: #b00020; }
+      .del:hover { color: #b00020; background: #fee; border-color: #fcc; }
       .section { margin-top: 8px; }
       .label { font-size: 11px; color: #888; margin-bottom: 2px; }
       .definition { font-size: 14px; color: #111; }
@@ -234,16 +236,36 @@
 
     let sseBuffer = '';        // 跨 chunk 拼接 SSE 字节
     let contentBuffer = '';    // 累计的 LLM content（来自 choices[0].delta.content）
+    let receivedAnyContent = false;
+    let translationDone = false;
 
     const port = chrome.runtime.connect({ name: 'translate' });
     activePort = port;
 
+    // 兜底超时：meta 之后 25s 还没拿到任何 content 字符 → 提示用户
+    const stallTimer = setTimeout(() => {
+      if (!receivedAnyContent && !translationDone) {
+        showError('翻译超时（25s 内未收到内容）。可能是网络问题或 DeepSeek 限流，稍后重试。');
+      }
+    }, 25000);
+
+    port.onDisconnect.addListener(() => {
+      clearTimeout(stallTimer);
+      if (!translationDone && !receivedAnyContent) {
+        showError('连接意外中断。请重试，或在 DevTools 控制台查看详细日志。');
+      }
+    });
+
     port.onMessage.addListener((msg) => {
       if (msg.type === 'error') {
         showError(`错误：${msg.error}`);
+        translationDone = true;
+        clearTimeout(stallTimer);
         return;
       }
       if (msg.type === 'done') {
+        translationDone = true;
+        clearTimeout(stallTimer);
         return;
       }
       if (msg.type !== 'chunk') return;
@@ -279,6 +301,7 @@
         const delta = obj?.choices?.[0]?.delta?.content;
         if (typeof delta === 'string' && delta.length) {
           contentBuffer += delta;
+          receivedAnyContent = true;
           renderProgressive(contentBuffer, word);
         }
       }

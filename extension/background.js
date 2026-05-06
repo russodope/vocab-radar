@@ -44,9 +44,12 @@ chrome.runtime.onConnect.addListener((port) => {
 
       // 4) 调 DeepSeek 流，逐行透传 + 同时 buffer 出 content
       const contentBuffer = [];
+      let lineCount = 0;
+      const t0 = Date.now();
       try {
         for await (const line of streamTranslate({ word, context, settings })) {
           if (aborted) break;
+          lineCount++;
           if (line === 'data: [DONE]') continue; // 我们自己最后单发
           if (line.startsWith('data:')) {
             // 抽 delta.content 落 buffer
@@ -59,10 +62,22 @@ chrome.runtime.onConnect.addListener((port) => {
           }
           port.postMessage({ type: 'chunk', data: line + '\n\n' });
         }
+        const dt = Date.now() - t0;
+        const totalChars = contentBuffer.join('').length;
+        console.log(`[VocabRadar] DeepSeek 完成 word="${word}" 耗时=${dt}ms 行=${lineCount} 字符=${totalChars}`);
+        if (totalChars === 0) {
+          // DeepSeek 返回了 200 但没产出任何内容 —— 透传一个 error chunk 让前端可见
+          port.postMessage({
+            type: 'chunk',
+            data: `data: ${JSON.stringify({ error: 'DeepSeek 返回了空内容（无 delta.content）' })}\n\n`,
+          });
+        }
       } catch (err) {
+        const errMsg = String(err.message || err);
+        console.warn(`[VocabRadar] DeepSeek 调用失败 word="${word}":`, errMsg);
         port.postMessage({
           type: 'chunk',
-          data: `data: ${JSON.stringify({ error: String(err.message || err).slice(0, 200) })}\n\n`,
+          data: `data: ${JSON.stringify({ error: errMsg.slice(0, 200) })}\n\n`,
         });
       }
 
