@@ -43,6 +43,16 @@
     }
   }
 
+  // 检测扩展上下文是否还有效（false = 扩展被刷新过，旧 content.js 是僵尸）
+  function isExtensionContextValid() {
+    try {
+      // chrome.runtime.id 在 context invalidated 后访问会抛错
+      return !!(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ========== 工具：从选中区附近抓"上下文句子" ==========
   function extractContextSentence(selection) {
     try {
@@ -254,12 +264,25 @@
     popupRoot.querySelector('.word').textContent = word;
     currentWord = word;
 
+    // 扩展刚被 reload 过 → 这个 tab 上的 content.js 是僵尸 → 给清晰提示
+    if (!isExtensionContextValid()) {
+      showError(t('lookup.error.extensionReloaded'));
+      return;
+    }
+
     let sseBuffer = '';        // 跨 chunk 拼接 SSE 字节
     let contentBuffer = '';    // 累计的 LLM content（来自 choices[0].delta.content）
     let receivedAnyContent = false;
     let translationDone = false;
 
-    const port = chrome.runtime.connect({ name: 'translate' });
+    let port;
+    try {
+      port = chrome.runtime.connect({ name: 'translate' });
+    } catch (e) {
+      // 防御性兜底：connect 抛错也提示用户刷新
+      showError(t('lookup.error.extensionReloaded'));
+      return;
+    }
     activePort = port;
 
     // 兜底超时：meta 之后 25s 还没拿到任何 content 字符 → 提示用户

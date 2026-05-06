@@ -104,6 +104,15 @@
     "de": "Verbindung abgebrochen. Erneut versuchen oder DevTools-Konsole für Details prüfen.",
     "es": "Conexión interrumpida. Reinténtalo o revisa la consola de DevTools para detalles."
   },
+  "lookup.error.extensionReloaded": {
+    "zh": "扩展已更新，请刷新此页面（Cmd/Ctrl + R）后重试。",
+    "en": "Extension was updated. Please refresh this page (Cmd/Ctrl + R) and try again.",
+    "ja": "拡張機能が更新されました。このページを再読み込み（Cmd/Ctrl + R）してから再試行してください。",
+    "ko": "확장 프로그램이 업데이트되었습니다. 이 페이지를 새로고침(Cmd/Ctrl + R)한 후 다시 시도하세요.",
+    "fr": "L'extension a été mise à jour. Rafraîchissez cette page (Cmd/Ctrl + R) et réessayez.",
+    "de": "Erweiterung wurde aktualisiert. Bitte diese Seite neu laden (Cmd/Ctrl + R) und erneut versuchen.",
+    "es": "La extensión se actualizó. Recarga esta página (Cmd/Ctrl + R) e inténtalo de nuevo."
+  },
   "lookup.badge.lookupCount": {
     "zh": "第 {n} 次",
     "en": "#{n}",
