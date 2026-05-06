@@ -333,6 +333,8 @@
     while (e > s && fullText[e - 1] === '-') e--;
 
     const expanded = fullText.slice(s, e).trim();
+    // 防御：扩展结果绝对不能含空白；若 offset 错位导致跨空格，回退原始选区
+    if (/\s/.test(expanded)) return original;
     return expanded || original;
   }
 
@@ -341,13 +343,23 @@
     // 点击在弹窗内不触发
     if (popupHost && popupHost.contains(e.target)) return;
 
+    // 双击 = e.detail === 2；拖选 = e.detail === 1
+    const isDoubleClick = e.detail === 2;
+
     // 节流到下一帧，等浏览器把 selection 状态稳定下来
     setTimeout(() => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed) return;
 
       // 先扩展再校验，"no-brainer" 这种通过双击也能查
-      const text = expandHyphenated(sel);
+      let text = expandHyphenated(sel);
+
+      // 双击只允许单词。某些页面/字体/NBSP 会让浏览器把两个词当一个选中；
+      // 这里只取第一个空白前的部分，避免把 "nails the" 这种存进库。
+      if (isDoubleClick && /\s/.test(text)) {
+        text = text.split(/\s+/)[0];
+      }
+
       if (!text || text.length > MAX_WORD_LEN) return;
       if (!VALID_RE.test(text)) return;
 
