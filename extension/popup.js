@@ -16,6 +16,7 @@ const $btnTest = $('btnTest');
 const $keyStatus = $('keyStatus');
 const $sourceLang = $('sourceLang');
 const $targetLang = $('targetLang');
+const $translatePhrases = $('translatePhrases');
 
 let supportedLangs = [];
 let currentSettings = null;
@@ -90,6 +91,7 @@ async function loadSettings() {
 
   fillLangSelect($sourceLang, currentSettings.sourceLang);
   fillLangSelect($targetLang, currentSettings.targetLang);
+  $translatePhrases.checked = currentSettings.translatePhrases !== false;
 }
 
 // 输入框失焦自动保存
@@ -142,6 +144,10 @@ $sourceLang.addEventListener('change', async () => {
 });
 $targetLang.addEventListener('change', async () => {
   await send('saveSettings', { patch: { targetLang: $targetLang.value } });
+});
+
+$translatePhrases.addEventListener('change', async () => {
+  await send('saveSettings', { patch: { translatePhrases: $translatePhrases.checked } });
 });
 
 $btnRefresh.addEventListener('click', loadStats);

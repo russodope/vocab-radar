@@ -4,7 +4,7 @@
 import {
   logLookupEvent, upsertWord, saveTranslation,
   listLearningWords, updateWordStatus, getStats,
-  exportAll, importAll,
+  deleteWord, exportAll, importAll,
 } from './lib/db.js';
 import { getSettings, saveSettings, SUPPORTED_LANGS } from './lib/settings.js';
 import { streamTranslate, testApiKey } from './lib/deepseek.js';
@@ -105,6 +105,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           const r = await updateWordStatus(msg.word, msg.status);
           if (!r) { sendResponse({ ok: false, error: 'word not found' }); break; }
           sendResponse({ ok: true, data: r });
+          break;
+        }
+        case 'deleteWord': {
+          await deleteWord(msg.word);
+          sendResponse({ ok: true });
           break;
         }
         case 'getStats': {

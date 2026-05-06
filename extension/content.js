@@ -15,6 +15,9 @@
   let activePort = null;      // 当前 SSE 连接
   let currentWord = null;     // 弹窗当前展示的词，用于"我认识了"按钮回填
 
+  // 缓存的用户设置（来自 chrome.storage.local，通过 background 拉一次 + onChanged 实时同步）
+  let cachedSettings = { translatePhrases: true };
+
   // ========== 工具：从选中区附近抓"上下文句子" ==========
   function extractContextSentence(selection) {
     try {
@@ -75,6 +78,12 @@
       .badge.stuck { background: #ffd580; color: #7a4a00; }
       .badge.fam   { background: #d6eaff; color: #1f4f88; }
       .badge.grad  { background: #d4f7d4; color: #1f6b1f; }
+      .del {
+        background: transparent; border: 0; color: #aaa;
+        font-size: 14px; padding: 0 4px; cursor: pointer;
+        margin-left: 4px; line-height: 1;
+      }
+      .del:hover { color: #b00020; }
       .section { margin-top: 8px; }
       .label { font-size: 11px; color: #888; margin-bottom: 2px; }
       .definition { font-size: 14px; color: #111; }
@@ -109,6 +118,7 @@
       <div class="head">
         <span class="word"></span>
         <span class="badge fresh" data-role="badge">…</span>
+        <button class="del" data-role="delete" title="从词库彻底删除（误操作时用）">✕</button>
       </div>
       <div class="section">
         <div class="label">中文释义</div>
@@ -134,6 +144,7 @@
     panel.querySelector('[data-role="close"]').addEventListener('click', closePopup);
     panel.querySelector('[data-role="known"]').addEventListener('click', onKnownClicked);
     panel.querySelector('[data-role="graduated"]').addEventListener('click', onGraduatedClicked);
+    panel.querySelector('[data-role="delete"]').addEventListener('click', onDeleteClicked);
 
     document.documentElement.appendChild(popupHost);
   }
@@ -363,6 +374,9 @@
       if (!text || text.length > MAX_WORD_LEN) return;
       if (!VALID_RE.test(text)) return;
 
+      // 多词短语开关（连字符复合词不含空白，不受此约束）
+      if (cachedSettings.translatePhrases === false && /\s/.test(text)) return;
+
       // 排除在 input/textarea/可编辑区/code/pre 里的选择
       const anchor = sel.anchorNode?.parentElement;
       if (!anchor) return;
@@ -422,6 +436,19 @@
   }
   const onKnownClicked = () => markStatus('familiar');
   const onGraduatedClicked = () => markStatus('graduated');
+
+  // 彻底删除：从 DB 删 word + 所有相关 lookup_events，并清当前页面高亮
+  async function onDeleteClicked() {
+    const word = currentWord;
+    if (!word) { closePopup(); return; }
+    closePopup();
+    const resp = await callBackground({ type: 'deleteWord', word });
+    if (resp?.ok) {
+      removeHighlightsByWord(word);
+    } else {
+      console.warn('[VocabRadar] deleteWord failed:', resp?.error);
+    }
+  }
 
   // ========== 高亮词列表 ==========
   // 不做客户端缓存：本地后端 /words < 50ms，缓存反而让"刚学的新词不立即高亮"成为常见 bug。
@@ -733,9 +760,24 @@
     if (tooltipActiveEl === el) hideTooltip();
   }
 
+  // ========== 设置同步 ==========
+  async function loadCachedSettings() {
+    const resp = await callBackground({ type: 'getSettings' });
+    if (resp?.ok && resp.data) cachedSettings = { ...cachedSettings, ...resp.data };
+  }
+  // popup 改设置时实时同步进 content.js（settings.js 用 vr_settings_v1 这个 key）
+  try {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      const c = changes['vr_settings_v1'];
+      if (c && c.newValue) cachedSettings = { ...cachedSettings, ...c.newValue };
+    });
+  } catch (_) {}
+
   // ========== 初始化 ==========
   async function init() {
     injectHighlightCss();
+    loadCachedSettings(); // 不阻塞高亮扫描
     try {
       const words = await loadHighlightWords();
       const count = scanAndHighlight(words);

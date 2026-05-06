@@ -21,6 +21,7 @@ const DEFAULTS = {
   model: 'deepseek-v4-flash',
   sourceLang: 'en',
   targetLang: 'zh',
+  translatePhrases: true,  // 是否允许多词短语触发翻译；连字符复合词不受此影响
 };
 
 export { SUPPORTED_LANGS };

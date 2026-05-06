@@ -147,6 +147,25 @@ export async function updateWordStatus(word, status) {
   return { word, status, lookup_count: updated.lookup_count };
 }
 
+// ---- delete_word: 把这个词从 words + 所有相关 lookup_events 里清干净
+export async function deleteWord(word) {
+  const db = await getDb();
+  const tx = db.transaction(['words', 'lookup_events'], 'readwrite');
+  tx.objectStore('words').delete(word);
+  // lookup_events 用 word index 拿到所有事件，逐个 cursor.delete()
+  const idx = tx.objectStore('lookup_events').index('word');
+  const cursorReq = idx.openCursor(IDBKeyRange.only(word));
+  await new Promise((resolve, reject) => {
+    cursorReq.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { cursor.delete(); cursor.continue(); }
+      else resolve();
+    };
+    cursorReq.onerror = () => reject(cursorReq.error);
+  });
+  await txDone(tx);
+}
+
 // ---- get_stats
 export async function getStats() {
   const db = await getDb();
