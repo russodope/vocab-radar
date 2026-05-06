@@ -79,6 +79,9 @@ export async function* streamTranslate({ word, context, settings }) {
     model,
     stream: true,
     temperature: 0.3,
+    // 输出上限：单词典型 100-200 tokens，整段翻译可能 600-1000；
+    // 1024 留充足空间且封死偶发"无限输出"，最坏单次成本 ≈ ¥0.0015
+    max_tokens: 1024,
     response_format: { type: 'json_object' },
     thinking: { type: 'disabled' },
     messages: [
