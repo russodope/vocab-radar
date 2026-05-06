@@ -4,6 +4,13 @@
 (function () {
   'use strict';
 
+  // ========== 重复注入防护：若已存在旧实例，先用 kill-switch 干掉它 ==========
+  // background.js 在扩展更新后会重新 inject 这个文件，老实例的 chrome.runtime API 已失效
+  // 但事件监听器还活在 page world，需要主动 cleanup 避免 listener 重复
+  try {
+    window.dispatchEvent(new CustomEvent('vr-kill'));
+  } catch (_) {}
+
   // ========== 配置 ==========
   const MAX_WORD_LEN = 50;
   // 单词或短语：英文字母、连字符、撇号、空格；不接受标点/换行
@@ -876,4 +883,22 @@
   // hover tooltip：mouseover/mouseout 用冒泡，靠 closest 委托到 .vr-highlight
   document.addEventListener('mouseover', onHoverEnter, true);
   document.addEventListener('mouseout', onHoverLeave, true);
+
+  // kill-switch：当扩展 reload 后新实例被注入，它会 dispatch 'vr-kill'，
+  // 触发我们这一节，把所有监听 + popup + observer 都拆掉
+  function destroySelf() {
+    try {
+      document.removeEventListener('mouseup', onMouseUp, true);
+      document.removeEventListener('mousedown', onDocClick, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('mouseover', onHoverEnter, true);
+      document.removeEventListener('mouseout', onHoverLeave, true);
+    } catch (_) {}
+    try { closePopup(); } catch (_) {}
+    try { hideTooltip(); } catch (_) {}
+    try { mutationObserver?.disconnect(); } catch (_) {}
+    // 移除我们注入的高亮 CSS 和 host
+    try { document.getElementById('vr-highlight-style')?.remove(); } catch (_) {}
+  }
+  window.addEventListener('vr-kill', destroySelf, { once: true });
 })();

@@ -105,17 +105,22 @@ export async function upsertWord({ word, context, sourceUrl }) {
     status: row.status,
     lookup_count: row.lookup_count,
     cachedTranslation: existing?.translation || null,
+    cachedTranslationLang: existing?.translation_lang || null,
   };
 }
 
-// ---- save_translation: 翻译流结束后存进 words.translation
-export async function saveTranslation(word, translationJson) {
+// ---- save_translation: 翻译流结束后存进 words.translation + 语言标记
+export async function saveTranslation(word, translationJson, targetLang) {
   const db = await getDb();
   const tx = db.transaction(['words'], 'readwrite');
   const store = tx.objectStore('words');
   const existing = await reqAsPromise(store.get(word));
-  if (!existing) return; // upsert 没走完就不存（理论上不该发生）
-  store.put({ ...existing, translation: translationJson });
+  if (!existing) return;
+  store.put({
+    ...existing,
+    translation: translationJson,
+    translation_lang: targetLang || null,
+  });
   await txDone(tx);
 }
 

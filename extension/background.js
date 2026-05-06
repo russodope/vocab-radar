@@ -8,6 +8,16 @@ import {
 } from './lib/db.js';
 import { getSettings, saveSettings, SUPPORTED_LANGS } from './lib/settings.js';
 import { streamTranslate, testApiKey } from './lib/deepseek.js';
+import { loadTranslations, t } from './lib/i18n.js';
+
+async function getNoKeyErrorMessage(lang) {
+  try {
+    const trs = await loadTranslations();
+    return t(trs, 'lookup.error.noKey', lang || 'zh');
+  } catch (_) {
+    return 'API key not configured';
+  }
+}
 
 // ====== content.js 通过 chrome.runtime.connect({name:'translate'}) 建长连接走流式 ======
 
@@ -27,29 +37,36 @@ chrome.runtime.onConnect.addListener((port) => {
       const upsertResult = await upsertWord({ word, context, sourceUrl });
       const meta = { status: upsertResult.status, lookup_count: upsertResult.lookup_count };
       const cachedTranslation = upsertResult.cachedTranslation;
+      const cachedTranslationLang = upsertResult.cachedTranslationLang;
 
       // 2) 把 meta 包成 SSE 格式发给 content.js（保持原协议不变）
       port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify({ meta })}\n\n` });
 
-      // 2.5) 缓存命中：之前查过且翻译还在 → 直接 fake-stream 缓存内容，0 API 调用
-      if (cachedTranslation) {
+      // 2.5) 缓存命中：仅当**翻译时的目标语言**和当前用户偏好一致才用缓存
+      //      用户切换 targetLang 后，旧 lang 的缓存失效 → 重新调 DeepSeek
+      const settings = await getSettings();
+      if (cachedTranslation && cachedTranslationLang === settings.targetLang) {
         const fakeChunk = {
           choices: [{ delta: { content: cachedTranslation }, finish_reason: 'stop' }],
         };
         port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify(fakeChunk)}\n\n` });
         port.postMessage({ type: 'chunk', data: 'data: [DONE]\n\n' });
         port.postMessage({ type: 'done' });
-        console.log(`[VocabRadar] 缓存命中 word="${word}" 跳过 DeepSeek 调用`);
+        console.log(`[VocabRadar] 缓存命中 word="${word}" lang=${cachedTranslationLang} 跳过 DeepSeek`);
         try { port.disconnect(); } catch (_) {}
         return;
       }
+      if (cachedTranslation && cachedTranslationLang !== settings.targetLang) {
+        console.log(`[VocabRadar] 缓存语言不匹配 word="${word}" cached=${cachedTranslationLang} now=${settings.targetLang} → 重译`);
+      }
 
       // 3) 校验 settings.apiKey 存在；不存在直接报错
-      const settings = await getSettings();
       if (!settings.apiKey) {
+        // i18n 这条错误：从 translations.json 拿对应语言；fallback 中文
+        const errMsg = await getNoKeyErrorMessage(settings.targetLang);
         port.postMessage({
           type: 'chunk',
-          data: `data: ${JSON.stringify({ error: '未配置 DeepSeek API key（点扩展图标 → 设置）' })}\n\n`,
+          data: `data: ${JSON.stringify({ error: errMsg })}\n\n`,
         });
         port.postMessage({ type: 'chunk', data: 'data: [DONE]\n\n' });
         port.postMessage({ type: 'done' });
@@ -104,7 +121,7 @@ chrome.runtime.onConnect.addListener((port) => {
       if (full && !aborted) {
         try {
           JSON.parse(full); // 验证完整 JSON
-          await saveTranslation(word, full);
+          await saveTranslation(word, full, settings.targetLang);
         } catch (_) { /* malformed JSON, skip */ }
       }
     } catch (err) {
@@ -189,8 +206,28 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 });
 
 // ====== 首次安装：打开 onboarding 页 ======
-chrome.runtime.onInstalled.addListener((details) => {
+// ====== 扩展更新：自动给所有 http(s) tab 重新注入 content.js（kill-switch 替换旧实例）
+chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     chrome.tabs.create({ url: chrome.runtime.getURL('onboarding.html') });
+  }
+  if (details.reason === 'update' || details.reason === 'install') {
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (!tab.id || !tab.url) continue;
+        if (!/^https?:/.test(tab.url)) continue;
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id, allFrames: false },
+            files: ['content.js'],
+          });
+        } catch (_) {
+          // chrome 商店、PDF viewer 等会拒绝注入；正常忽略
+        }
+      }
+    } catch (e) {
+      console.warn('[VocabRadar] re-inject sweep failed', e);
+    }
   }
 });

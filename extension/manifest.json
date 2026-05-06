@@ -3,7 +3,7 @@
   "name": "VocabRadar",
   "version": "0.2.0",
   "description": "划词查英文，自动追踪个人词汇成长。完全本地存储，BYOK（自带 DeepSeek key）。",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://api.deepseek.com/*",
     "http://*/*",
