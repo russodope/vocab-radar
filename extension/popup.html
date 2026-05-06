@@ -95,66 +95,67 @@
     <h1>VocabRadar <span class="ver">v0.2</span></h1>
 
     <div id="noKeyBanner" class="no-key-banner" hidden>
-      <span class="hl">尚未设置 API key</span><br/>
-      在下面 <b>API Key</b> 区粘贴你的 DeepSeek key 即可开始使用。
+      <span class="hl" data-i18n="popup.key.notSet">尚未设置 API key</span><br/>
+      <span data-i18n-html="popup.key.notSetHint">在下面 <b>API Key</b> 区粘贴你的 DeepSeek key 即可开始使用。</span>
     </div>
 
     <!-- 统计 -->
     <div class="section">
       <div class="header-row">
-        <div class="section-title">词汇统计</div>
-        <button class="refresh" id="btnRefresh" title="刷新">↻</button>
+        <div class="section-title" data-i18n="popup.section.stats">词汇统计</div>
+        <button class="refresh" id="btnRefresh" title="↻">↻</button>
       </div>
       <div class="total">
         <span class="num" id="totalNum"><span class="skeleton"></span></span>
-        <span class="lbl">总词数</span>
+        <span class="lbl" data-i18n="popup.stat.total">总词数</span>
       </div>
       <div class="breakdown">
-        <div class="stat" data-tier="learning"><span class="k">学习中</span><span class="v" id="learning"><span class="skeleton"></span></span></div>
-        <div class="stat" data-tier="familiar"><span class="k">已认识</span><span class="v" id="familiar"><span class="skeleton"></span></span></div>
-        <div class="stat" data-tier="graduated"><span class="k">已掌握</span><span class="v" id="graduated"><span class="skeleton"></span></span></div>
-        <div class="stat"><span class="k">高亮中</span><span class="v" id="highlightNum"><span class="skeleton"></span></span></div>
+        <div class="stat" data-tier="learning"><span class="k" data-i18n="popup.stat.learning">学习中</span><span class="v" id="learning"><span class="skeleton"></span></span></div>
+        <div class="stat" data-tier="familiar"><span class="k" data-i18n="popup.stat.familiar">已认识</span><span class="v" id="familiar"><span class="skeleton"></span></span></div>
+        <div class="stat" data-tier="graduated"><span class="k" data-i18n="popup.stat.graduated">已掌握</span><span class="v" id="graduated"><span class="skeleton"></span></span></div>
+        <div class="stat"><span class="k" data-i18n="popup.stat.highlighted">高亮中</span><span class="v" id="highlightNum"><span class="skeleton"></span></span></div>
       </div>
       <div class="today">
-        <span class="k">今日查询</span>
+        <span class="k" data-i18n="popup.stat.today">今日查询</span>
         <span class="v" id="todayNum"><span class="skeleton"></span></span>
       </div>
     </div>
 
     <!-- API Key -->
     <div class="section">
-      <div class="section-title">API Key (DeepSeek)</div>
+      <div class="section-title" data-i18n="popup.section.key">API Key (DeepSeek)</div>
       <div class="key-row">
         <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
-        <button id="btnTest">测试</button>
+        <button id="btnTest" data-i18n="popup.action.test">测试</button>
       </div>
       <div class="status-msg" id="keyStatus" hidden></div>
       <div class="hint">
-        <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 创建 key；建议为本插件单独建一个并设置月度限额。Key 只存在你浏览器本地。
+        <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a>
+        <span data-i18n="popup.key.hint">创建 key；建议为本插件单独建一个并设置月度限额。Key 只存在你浏览器本地。</span>
       </div>
     </div>
 
     <!-- 语言对 -->
     <div class="section">
-      <div class="section-title">语言对</div>
+      <div class="section-title" data-i18n="popup.section.lang">语言对</div>
       <div class="row">
-        <label>阅读语言</label>
+        <label data-i18n="popup.lang.source">阅读语言</label>
         <select id="sourceLang"></select>
       </div>
       <div class="row">
-        <label>释义语言</label>
+        <label data-i18n="popup.lang.target">释义语言</label>
         <select id="targetLang"></select>
       </div>
     </div>
 
     <!-- 行为 -->
     <div class="section">
-      <div class="section-title">行为</div>
+      <div class="section-title" data-i18n="popup.section.behavior">行为</div>
       <div class="row">
-        <label for="translatePhrases" style="cursor:pointer;">允许翻译多词短语</label>
+        <label for="translatePhrases" style="cursor:pointer;" data-i18n="popup.behavior.phrases">允许翻译多词短语</label>
         <input type="checkbox" id="translatePhrases" />
       </div>
-      <div class="hint">关闭后，drag-select 一整段不会触发翻译；连字符词（如 no-brainer）不受影响。</div>
+      <div class="hint" data-i18n="popup.behavior.phrases.hint">关闭后，drag-select 一整段不会触发翻译；连字符词（如 no-brainer）不受影响。</div>
     </div>
 
     <script type="module" src="popup.js"></script>

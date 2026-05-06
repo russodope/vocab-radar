@@ -1,0 +1,333 @@
+{
+  "_meta": {
+    "supported_langs": ["zh", "en", "ja", "ko", "fr", "de", "es"],
+    "fallback": "en",
+    "note": "Native names of langs go into popup language selector via SUPPORTED_LANGS in settings.js, not here."
+  },
+
+  "lookup.label.definition": {
+    "zh": "释义",
+    "en": "Definition",
+    "ja": "意味",
+    "ko": "의미",
+    "fr": "Définition",
+    "de": "Definition",
+    "es": "Definición"
+  },
+  "lookup.label.in_context": {
+    "zh": "本句中含义",
+    "en": "In context",
+    "ja": "この文での意味",
+    "ko": "이 문장에서",
+    "fr": "Dans le contexte",
+    "de": "Im Kontext",
+    "es": "En contexto"
+  },
+  "lookup.label.example": {
+    "zh": "例句",
+    "en": "Example",
+    "ja": "例文",
+    "ko": "예문",
+    "fr": "Exemple",
+    "de": "Beispiel",
+    "es": "Ejemplo"
+  },
+  "lookup.action.known": {
+    "zh": "我认识了",
+    "en": "Got it",
+    "ja": "知ってる",
+    "ko": "알아요",
+    "fr": "Connu",
+    "de": "Bekannt",
+    "es": "Lo sé"
+  },
+  "lookup.action.graduated": {
+    "zh": "完全掌握",
+    "en": "Mastered",
+    "ja": "マスター済",
+    "ko": "숙달",
+    "fr": "Maîtrisé",
+    "de": "Beherrscht",
+    "es": "Dominado"
+  },
+  "lookup.action.delete": {
+    "zh": "不用记",
+    "en": "Skip",
+    "ja": "不要",
+    "ko": "건너뛰기",
+    "fr": "Ignorer",
+    "de": "Überspringen",
+    "es": "Saltar"
+  },
+  "lookup.action.delete.title": {
+    "zh": "从词库彻底删除（误操作时用）",
+    "en": "Remove from vocab (for accidental triggers)",
+    "ja": "単語帳から完全削除（誤操作用）",
+    "ko": "단어장에서 삭제 (오작동 시)",
+    "fr": "Supprimer du vocabulaire (en cas d'erreur)",
+    "de": "Aus Wortschatz löschen (bei Fehlbedienung)",
+    "es": "Eliminar del vocabulario (errores accidentales)"
+  },
+  "lookup.action.close": {
+    "zh": "关闭",
+    "en": "Close",
+    "ja": "閉じる",
+    "ko": "닫기",
+    "fr": "Fermer",
+    "de": "Schließen",
+    "es": "Cerrar"
+  },
+  "lookup.error.prefix": {
+    "zh": "错误：",
+    "en": "Error: ",
+    "ja": "エラー：",
+    "ko": "오류: ",
+    "fr": "Erreur : ",
+    "de": "Fehler: ",
+    "es": "Error: "
+  },
+  "lookup.error.timeout": {
+    "zh": "翻译超时（25 秒内未收到内容）。可能是网络问题或 DeepSeek 限流，稍后重试。",
+    "en": "Translation timeout (no content within 25s). Network issue or rate limit; try again later.",
+    "ja": "翻訳タイムアウト（25 秒以内に応答なし）。ネットワーク問題またはレート制限の可能性があります。",
+    "ko": "번역 시간 초과 (25초 이내 응답 없음). 네트워크 문제 또는 속도 제한일 수 있습니다.",
+    "fr": "Délai de traduction dépassé (aucune réponse en 25 s). Problème réseau ou limite de débit ; réessayez plus tard.",
+    "de": "Übersetzung Zeitüberschreitung (keine Antwort innerhalb 25 s). Netzwerkproblem oder Rate-Limit; bitte erneut versuchen.",
+    "es": "Tiempo de traducción agotado (sin respuesta en 25 s). Problema de red o límite de velocidad; inténtalo más tarde."
+  },
+  "lookup.error.disconnect": {
+    "zh": "连接意外中断。请重试，或在 DevTools 控制台查看详细日志。",
+    "en": "Connection dropped. Retry or check DevTools console for details.",
+    "ja": "接続が切断されました。再試行するか、DevTools コンソールでログを確認してください。",
+    "ko": "연결이 끊겼습니다. 다시 시도하거나 DevTools 콘솔에서 자세한 로그를 확인하세요.",
+    "fr": "Connexion interrompue. Réessayez ou consultez la console DevTools pour les détails.",
+    "de": "Verbindung abgebrochen. Erneut versuchen oder DevTools-Konsole für Details prüfen.",
+    "es": "Conexión interrumpida. Reinténtalo o revisa la consola de DevTools para detalles."
+  },
+  "lookup.badge.lookupCount": {
+    "zh": "第 {n} 次",
+    "en": "#{n}",
+    "ja": "{n} 回目",
+    "ko": "{n}회째",
+    "fr": "n°{n}",
+    "de": "Nr. {n}",
+    "es": "Nº {n}"
+  },
+  "lookup.error.noKey": {
+    "zh": "未配置 DeepSeek API key（点扩展图标 → 设置）",
+    "en": "DeepSeek API key not set (click extension icon → settings)",
+    "ja": "DeepSeek API キー未設定（拡張機能アイコン → 設定）",
+    "ko": "DeepSeek API 키 미설정 (확장 프로그램 아이콘 → 설정)",
+    "fr": "Clé API DeepSeek non définie (cliquer icône → paramètres)",
+    "de": "DeepSeek API-Schlüssel nicht gesetzt (Symbol klicken → Einstellungen)",
+    "es": "Clave API DeepSeek no configurada (clic en icono → ajustes)"
+  },
+
+  "popup.section.stats": {
+    "zh": "词汇统计",
+    "en": "Statistics",
+    "ja": "統計",
+    "ko": "통계",
+    "fr": "Statistiques",
+    "de": "Statistik",
+    "es": "Estadísticas"
+  },
+  "popup.stat.total": {
+    "zh": "总词数",
+    "en": "Total",
+    "ja": "総単語",
+    "ko": "총 단어",
+    "fr": "Total",
+    "de": "Gesamt",
+    "es": "Total"
+  },
+  "popup.stat.learning": {
+    "zh": "学习中",
+    "en": "Learning",
+    "ja": "学習中",
+    "ko": "학습 중",
+    "fr": "En cours",
+    "de": "Lernen",
+    "es": "Aprendiendo"
+  },
+  "popup.stat.familiar": {
+    "zh": "已认识",
+    "en": "Familiar",
+    "ja": "認識済",
+    "ko": "익숙함",
+    "fr": "Connu",
+    "de": "Bekannt",
+    "es": "Familiar"
+  },
+  "popup.stat.graduated": {
+    "zh": "已掌握",
+    "en": "Mastered",
+    "ja": "マスター済",
+    "ko": "숙달",
+    "fr": "Maîtrisé",
+    "de": "Beherrscht",
+    "es": "Dominado"
+  },
+  "popup.stat.highlighted": {
+    "zh": "高亮中",
+    "en": "Highlighted",
+    "ja": "ハイライト中",
+    "ko": "강조 중",
+    "fr": "Surlignés",
+    "de": "Hervorgehoben",
+    "es": "Resaltadas"
+  },
+  "popup.stat.today": {
+    "zh": "今日查询",
+    "en": "Today",
+    "ja": "今日",
+    "ko": "오늘",
+    "fr": "Aujourd'hui",
+    "de": "Heute",
+    "es": "Hoy"
+  },
+  "popup.section.key": {
+    "zh": "API Key (DeepSeek)",
+    "en": "API Key (DeepSeek)",
+    "ja": "API キー (DeepSeek)",
+    "ko": "API 키 (DeepSeek)",
+    "fr": "Clé API (DeepSeek)",
+    "de": "API-Schlüssel (DeepSeek)",
+    "es": "Clave API (DeepSeek)"
+  },
+  "popup.action.test": {
+    "zh": "测试",
+    "en": "Test",
+    "ja": "テスト",
+    "ko": "테스트",
+    "fr": "Tester",
+    "de": "Testen",
+    "es": "Probar"
+  },
+  "popup.key.savedReplaceHint": {
+    "zh": "（已保存，重新粘贴可替换）",
+    "en": "(saved, paste to replace)",
+    "ja": "（保存済み、貼付で置換）",
+    "ko": "(저장됨, 붙여넣어 변경)",
+    "fr": "(sauvegardée, coller pour remplacer)",
+    "de": "(gespeichert, einfügen zum Ersetzen)",
+    "es": "(guardada, pegar para reemplazar)"
+  },
+  "popup.key.savedShort": {
+    "zh": "（已保存）",
+    "en": "(saved)",
+    "ja": "（保存済み）",
+    "ko": "(저장됨)",
+    "fr": "(sauvegardée)",
+    "de": "(gespeichert)",
+    "es": "(guardada)"
+  },
+  "popup.key.hint": {
+    "zh": "在 platform.deepseek.com 创建 key；建议为本插件单独建一个并设置月度限额。Key 只存在你浏览器本地。",
+    "en": "Create a key at platform.deepseek.com; recommend a dedicated key with monthly limit. Stored only in your browser.",
+    "ja": "platform.deepseek.com でキー作成。専用キーを月額制限付きで作ることを推奨。キーはローカルのみ保存。",
+    "ko": "platform.deepseek.com에서 키 생성. 전용 키와 월별 한도 권장. 키는 브라우저에만 저장.",
+    "fr": "Créez une clé sur platform.deepseek.com ; clé dédiée avec limite mensuelle recommandée. Stockée localement.",
+    "de": "Schlüssel auf platform.deepseek.com erstellen; dedizierter Schlüssel mit Monatslimit empfohlen. Nur lokal.",
+    "es": "Crea una clave en platform.deepseek.com; clave dedicada con límite mensual recomendada. Solo se guarda localmente."
+  },
+  "popup.key.testing": {
+    "zh": "正在校验...",
+    "en": "Validating...",
+    "ja": "検証中...",
+    "ko": "검증 중...",
+    "fr": "Vérification...",
+    "de": "Validierung...",
+    "es": "Validando..."
+  },
+  "popup.key.valid": {
+    "zh": "✓ key 有效",
+    "en": "✓ Key valid",
+    "ja": "✓ キー有効",
+    "ko": "✓ 키 유효",
+    "fr": "✓ Clé valide",
+    "de": "✓ Schlüssel gültig",
+    "es": "✓ Clave válida"
+  },
+  "popup.key.empty": {
+    "zh": "请先粘贴 key",
+    "en": "Paste a key first",
+    "ja": "キーを貼り付けてください",
+    "ko": "키를 먼저 붙여넣으세요",
+    "fr": "Collez d'abord une clé",
+    "de": "Bitte Schlüssel einfügen",
+    "es": "Pega una clave primero"
+  },
+  "popup.key.notSet": {
+    "zh": "尚未设置 API key",
+    "en": "API key not set",
+    "ja": "API キー未設定",
+    "ko": "API 키 미설정",
+    "fr": "Clé API non définie",
+    "de": "API-Schlüssel nicht gesetzt",
+    "es": "Clave API no configurada"
+  },
+  "popup.key.notSetHint": {
+    "zh": "在下面 API Key 区粘贴你的 DeepSeek key 即可开始使用。",
+    "en": "Paste your DeepSeek key in the API Key section below to start.",
+    "ja": "下の API Key 欄に DeepSeek キーを貼り付けてください。",
+    "ko": "아래 API Key 섹션에 DeepSeek 키를 붙여넣으세요.",
+    "fr": "Collez votre clé DeepSeek dans la section API Key ci-dessous.",
+    "de": "DeepSeek-Schlüssel im Abschnitt API Key unten einfügen.",
+    "es": "Pega tu clave DeepSeek en la sección API Key abajo."
+  },
+  "popup.section.lang": {
+    "zh": "语言对",
+    "en": "Languages",
+    "ja": "言語ペア",
+    "ko": "언어 쌍",
+    "fr": "Langues",
+    "de": "Sprachen",
+    "es": "Idiomas"
+  },
+  "popup.lang.source": {
+    "zh": "阅读语言",
+    "en": "Reading",
+    "ja": "読む言語",
+    "ko": "읽는 언어",
+    "fr": "Langue lue",
+    "de": "Lese-Sprache",
+    "es": "Idioma leído"
+  },
+  "popup.lang.target": {
+    "zh": "释义语言",
+    "en": "Definition language",
+    "ja": "訳出言語",
+    "ko": "풀이 언어",
+    "fr": "Langue d'explication",
+    "de": "Erklärungssprache",
+    "es": "Idioma de explicación"
+  },
+  "popup.section.behavior": {
+    "zh": "行为",
+    "en": "Behavior",
+    "ja": "動作",
+    "ko": "동작",
+    "fr": "Comportement",
+    "de": "Verhalten",
+    "es": "Comportamiento"
+  },
+  "popup.behavior.phrases": {
+    "zh": "允许翻译多词短语",
+    "en": "Translate phrases",
+    "ja": "多語フレーズを翻訳",
+    "ko": "다단어 구문 번역",
+    "fr": "Traduire les phrases",
+    "de": "Phrasen übersetzen",
+    "es": "Traducir frases"
+  },
+  "popup.behavior.phrases.hint": {
+    "zh": "关闭后，drag-select 一整段不会触发翻译；连字符词（如 no-brainer）不受影响。",
+    "en": "When off, drag-selecting full sentences won't trigger; hyphenated words (no-brainer) still work.",
+    "ja": "オフにすると、ドラッグ選択で文全体を翻訳しません。ハイフン語（no-brainer 等）は影響なし。",
+    "ko": "끄면 드래그로 전체 문장 선택 시 번역 안 됨. 하이픈 단어(no-brainer)는 영향 없음.",
+    "fr": "Désactivé : sélectionner des phrases entières ne déclenche rien. Les mots avec trait d'union (no-brainer) restent actifs.",
+    "de": "Aus: Markieren ganzer Sätze löst nichts aus. Wörter mit Bindestrich (no-brainer) funktionieren weiter.",
+    "es": "Desactivado: seleccionar frases completas no activa. Palabras con guion (no-brainer) sí."
+  }
+}

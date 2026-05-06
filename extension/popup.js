@@ -1,7 +1,10 @@
 // VocabRadar - popup
-// 1) 词汇统计  2) BYOK key 输入 + 测试  3) 7×7 语言对
+// 1) 词汇统计  2) BYOK key 输入 + 测试  3) 7×7 语言对  4) i18n 跟 targetLang 走
+
+import { loadTranslations, makeT } from './lib/i18n.js';
 
 const $ = (id) => document.getElementById(id);
+let _t = (k) => k; // 占位，loadSettings 后替换为真正的 t()
 
 const $banner = $('noKeyBanner');
 const $totalNum = $('totalNum');
@@ -72,16 +75,25 @@ async function loadStats() {
 async function loadSettings() {
   const resp = await send('getSettings');
   if (!resp?.ok) {
-    setKeyStatus('读取设置失败', 'err');
+    setKeyStatus(_t('popup.key.empty') || 'failed to load settings', 'err');
     return;
   }
   currentSettings = resp.data;
   supportedLangs = resp.supportedLangs || [];
   savedKey = currentSettings.apiKey || '';
 
+  // i18n：先加载翻译表 → 重建 _t() → 给所有 data-i18n 元素填上对应语言文本
+  try {
+    const translations = await loadTranslations();
+    _t = makeT(translations, currentSettings.targetLang || 'zh');
+    applyI18n();
+  } catch (e) {
+    console.warn('[VocabRadar] i18n load failed, falling back to default text', e);
+  }
+
   // key 输入框：有 key 时展示掩码占位（实际 value 留空，避免泄露原文回到 DOM）
   if (savedKey) {
-    $apiKey.placeholder = maskedDisplay(savedKey) + '（已保存，重新粘贴可替换）';
+    $apiKey.placeholder = maskedDisplay(savedKey) + ' ' + _t('popup.key.savedReplaceHint');
     $banner.hidden = true;
   } else {
     $apiKey.placeholder = 'sk-...';
@@ -94,6 +106,18 @@ async function loadSettings() {
   $translatePhrases.checked = currentSettings.translatePhrases !== false;
 }
 
+// 把所有带 data-i18n 的元素 textContent 替换成对应翻译；data-i18n-html 用 innerHTML
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = _t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-html');
+    el.innerHTML = _t(key);
+  });
+}
+
 // 输入框失焦自动保存
 async function maybeSaveKey() {
   const newKey = $apiKey.value.trim();
@@ -102,9 +126,9 @@ async function maybeSaveKey() {
   await send('saveSettings', { patch: { apiKey: newKey } });
   savedKey = newKey;
   $apiKey.value = '';
-  $apiKey.placeholder = maskedDisplay(savedKey) + '（已保存）';
+  $apiKey.placeholder = maskedDisplay(savedKey) + ' ' + _t('popup.key.savedShort');
   $banner.hidden = true;
-  setKeyStatus('已保存', 'ok');
+  setKeyStatus(_t('popup.key.savedShort'), 'ok');
   setTimeout(() => setKeyStatus(''), 1500);
 }
 
@@ -116,11 +140,11 @@ $apiKey.addEventListener('keydown', (e) => {
 $btnTest.addEventListener('click', async () => {
   const candidate = $apiKey.value.trim() || savedKey;
   if (!candidate) {
-    setKeyStatus('请先粘贴 key', 'err');
+    setKeyStatus(_t('popup.key.empty'), 'err');
     return;
   }
   $btnTest.disabled = true;
-  setKeyStatus('正在校验...', '');
+  setKeyStatus(_t('popup.key.testing'), '');
   // 测试用临时 patch；通过后才写盘
   const r = await send('testApiKey', { patch: { apiKey: candidate } });
   if (r?.ok) {
@@ -129,12 +153,12 @@ $btnTest.addEventListener('click', async () => {
       await send('saveSettings', { patch: { apiKey: candidate } });
       savedKey = candidate;
       $apiKey.value = '';
-      $apiKey.placeholder = maskedDisplay(savedKey) + '（已保存）';
+      $apiKey.placeholder = maskedDisplay(savedKey) + ' ' + _t('popup.key.savedShort');
       $banner.hidden = true;
     }
-    setKeyStatus('✓ key 有效', 'ok');
+    setKeyStatus(_t('popup.key.valid'), 'ok');
   } else {
-    setKeyStatus('✗ ' + (r?.error || '未知错误'), 'err');
+    setKeyStatus('✗ ' + (r?.error || ''), 'err');
   }
   $btnTest.disabled = false;
 });
@@ -144,6 +168,15 @@ $sourceLang.addEventListener('change', async () => {
 });
 $targetLang.addEventListener('change', async () => {
   await send('saveSettings', { patch: { targetLang: $targetLang.value } });
+  // 立即重新应用 i18n，让 popup UI 跟着切语言
+  try {
+    const translations = await loadTranslations();
+    _t = makeT(translations, $targetLang.value);
+    applyI18n();
+    if (savedKey) {
+      $apiKey.placeholder = maskedDisplay(savedKey) + ' ' + _t('popup.key.savedReplaceHint');
+    }
+  } catch (_) {}
 });
 
 $translatePhrases.addEventListener('change', async () => {

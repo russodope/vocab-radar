@@ -16,7 +16,32 @@
   let currentWord = null;     // 弹窗当前展示的词，用于"我认识了"按钮回填
 
   // 缓存的用户设置（来自 chrome.storage.local，通过 background 拉一次 + onChanged 实时同步）
-  let cachedSettings = { translatePhrases: true };
+  let cachedSettings = { translatePhrases: true, targetLang: 'zh' };
+
+  // ========== i18n（content script 是 classic script，自己 fetch translations.json）==========
+  let TRANSLATIONS = null;
+  function t(key, params) {
+    if (!TRANSLATIONS) return key;
+    const entry = TRANSLATIONS[key];
+    if (!entry) return key;
+    const lang = cachedSettings.targetLang || 'zh';
+    let s = entry[lang] || entry['en'] || entry['zh'] || key;
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }
+    }
+    return s;
+  }
+  async function loadTranslationsCS() {
+    try {
+      const url = chrome.runtime.getURL('lib/translations.json');
+      const resp = await fetch(url);
+      TRANSLATIONS = await resp.json();
+    } catch (e) {
+      console.warn('[VocabRadar] load translations failed:', e);
+    }
+  }
 
   // ========== 工具：从选中区附近抓"上下文句子" ==========
   function extractContextSentence(selection) {
@@ -117,23 +142,23 @@
         <span class="badge fresh" data-role="badge">…</span>
       </div>
       <div class="section">
-        <div class="label">中文释义</div>
+        <div class="label">${t('lookup.label.definition')}</div>
         <div class="definition" data-role="definition"><span class="skeleton full"></span></div>
       </div>
       <div class="section">
-        <div class="label">本句中含义</div>
+        <div class="label">${t('lookup.label.in_context')}</div>
         <div class="in-context" data-role="in-context"><span class="skeleton short"></span></div>
       </div>
       <div class="section">
-        <div class="label">例句</div>
+        <div class="label">${t('lookup.label.example')}</div>
         <div class="example" data-role="example"><span class="skeleton full"></span></div>
       </div>
       <div class="err" data-role="err" hidden></div>
       <div class="actions">
-        <button data-role="known">我认识了</button>
-        <button data-role="graduated" class="grad-btn">完全掌握</button>
-        <button data-role="delete" class="del-btn" title="从词库彻底删除（误操作时用）">不用记</button>
-        <button data-role="close">关闭</button>
+        <button data-role="known">${t('lookup.action.known')}</button>
+        <button data-role="graduated" class="grad-btn">${t('lookup.action.graduated')}</button>
+        <button data-role="delete" class="del-btn" title="${t('lookup.action.delete.title')}">${t('lookup.action.delete')}</button>
+        <button data-role="close">${t('lookup.action.close')}</button>
       </div>
     `;
     popupRoot.appendChild(panel);
@@ -171,7 +196,7 @@
     else if (status === 'graduated') badge.classList.add('grad');
     else if (lookup_count >= 3) badge.classList.add('stuck');
     else badge.classList.add('fresh');
-    badge.textContent = `${status} · 第 ${lookup_count} 次`;
+    badge.textContent = `${status} · ${t('lookup.badge.lookupCount', { n: lookup_count })}`;
   }
 
   function showError(msg) {
@@ -240,20 +265,20 @@
     // 兜底超时：meta 之后 25s 还没拿到任何 content 字符 → 提示用户
     const stallTimer = setTimeout(() => {
       if (!receivedAnyContent && !translationDone) {
-        showError('翻译超时（25s 内未收到内容）。可能是网络问题或 DeepSeek 限流，稍后重试。');
+        showError(t('lookup.error.timeout'));
       }
     }, 25000);
 
     port.onDisconnect.addListener(() => {
       clearTimeout(stallTimer);
       if (!translationDone && !receivedAnyContent) {
-        showError('连接意外中断。请重试，或在 DevTools 控制台查看详细日志。');
+        showError(t('lookup.error.disconnect'));
       }
     });
 
     port.onMessage.addListener((msg) => {
       if (msg.type === 'error') {
-        showError(`错误：${msg.error}`);
+        showError(`${t('lookup.error.prefix')}${msg.error}`);
         translationDone = true;
         clearTimeout(stallTimer);
         return;
@@ -289,7 +314,7 @@
         }
         // 2) 我们自定义的 error
         if (obj.error) {
-          showError(`错误：${obj.error}`);
+          showError(`${t('lookup.error.prefix')}${obj.error}`);
           continue;
         }
         // 3) DeepSeek 的标准 chat completion chunk
@@ -795,7 +820,9 @@
   // ========== 初始化 ==========
   async function init() {
     injectHighlightCss();
-    loadCachedSettings(); // 不阻塞高亮扫描
+    // 翻译表 + 设置同步并行启动；高亮扫描不等它们
+    loadTranslationsCS();
+    loadCachedSettings();
     try {
       const words = await loadHighlightWords();
       const count = scanAndHighlight(words);
