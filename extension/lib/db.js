@@ -71,17 +71,28 @@ export async function logLookupEvent({ word, context, sourceUrl, pageTitle }) {
 }
 
 // ---- upsert_word: 单事务 read-modify-write
-// 返回：(status, lookup_count, cachedTranslation)
-//   cachedTranslation = upsert 之前已存在的 translation 字段（用于跳过重复 LLM 调用）
+// 返回：(status, lookup_count, cachedTranslation, cachedTranslationLang, demoted)
+//   demoted: true 表示这次 upsert 把 familiar/graduated 自动降级回了 learning
+//
+// 状态机自动降级：familiar / graduated 状态的词如果被用户再次查询，强信号说明没真掌握，
+// 自动 demote 回 learning。delete（"不用记"）的词由于走 deleteWord 已经完全删除，
+// 这里看到的就是 existing=null 的全新词，不会触发降级。
 export async function upsertWord({ word, context, sourceUrl }) {
   const db = await getDb();
   const tx = db.transaction(['words'], 'readwrite');
   const store = tx.objectStore('words');
   const existing = await reqAsPromise(store.get(word));
   let row;
+  let demoted = false;
   if (existing) {
+    let newStatus = existing.status;
+    if (existing.status === 'familiar' || existing.status === 'graduated') {
+      newStatus = 'learning';
+      demoted = true;
+    }
     row = {
       ...existing,
+      status: newStatus,
       lookup_count: (existing.lookup_count || 0) + 1,
       last_seen_at: nowIso(),
       last_context: context || existing.last_context || null,
@@ -106,6 +117,7 @@ export async function upsertWord({ word, context, sourceUrl }) {
     lookup_count: row.lookup_count,
     cachedTranslation: existing?.translation || null,
     cachedTranslationLang: existing?.translation_lang || null,
+    demoted,
   };
 }
 

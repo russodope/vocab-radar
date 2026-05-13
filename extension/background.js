@@ -38,6 +38,9 @@ chrome.runtime.onConnect.addListener((port) => {
       const meta = { status: upsertResult.status, lookup_count: upsertResult.lookup_count };
       const cachedTranslation = upsertResult.cachedTranslation;
       const cachedTranslationLang = upsertResult.cachedTranslationLang;
+      if (upsertResult.demoted) {
+        console.log(`[VocabRadar] 自动降级 word="${word}" 已认识/已掌握 → learning（用户又在查）`);
+      }
 
       // 2) 把 meta 包成 SSE 格式发给 content.js（保持原协议不变）
       port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify({ meta })}\n\n` });

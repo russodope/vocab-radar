@@ -672,6 +672,15 @@
       const pattern = '\\b(' + allWords.map(escapeRegex).join('|') + ')\\b';
       scanContext.regex = new RegExp(pattern, 'gi');
     }
+    // 实时升级已有 span 的 tier：lookup_count 由 < 3 跨到 >= 3 时，颜色从黄变橙
+    try {
+      const escapedKey = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(key) : key.replace(/"/g, '\\"');
+      const spans = document.querySelectorAll(`span.${HIGHLIGHT_CLASS}[data-vr-word="${escapedKey}"]`);
+      spans.forEach((s) => {
+        if (lookupCount >= 3) s.dataset.vrTier = 'hot';
+        else delete s.dataset.vrTier;
+      });
+    } catch (_) {}
     scanRoot(document.body, scanContext);
   }
 
