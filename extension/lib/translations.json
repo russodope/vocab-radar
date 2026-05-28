@@ -338,5 +338,78 @@
     "fr": "Désactivé : sélectionner des phrases entières ne déclenche rien. Les mots avec trait d'union (no-brainer) restent actifs.",
     "de": "Aus: Markieren ganzer Sätze löst nichts aus. Wörter mit Bindestrich (no-brainer) funktionieren weiter.",
     "es": "Desactivado: seleccionar frases completas no activa. Palabras con guion (no-brainer) sí."
+  },
+
+  "popup.section.backup": {
+    "zh": "备份与迁移",
+    "en": "Backup & Migration",
+    "ja": "バックアップと移行",
+    "ko": "백업 및 이전",
+    "fr": "Sauvegarde et migration",
+    "de": "Sicherung und Migration",
+    "es": "Copia y migración"
+  },
+  "popup.action.export": {
+    "zh": "导出词库",
+    "en": "Export",
+    "ja": "エクスポート",
+    "ko": "내보내기",
+    "fr": "Exporter",
+    "de": "Exportieren",
+    "es": "Exportar"
+  },
+  "popup.action.import": {
+    "zh": "导入词库",
+    "en": "Import",
+    "ja": "インポート",
+    "ko": "가져오기",
+    "fr": "Importer",
+    "de": "Importieren",
+    "es": "Importar"
+  },
+  "popup.backup.hint": {
+    "zh": "下载 JSON 备份；新设备装好扩展后导入此文件即可迁移词库（API key 需重新粘贴）。",
+    "en": "Download a JSON backup. On a new device, install the extension and import this file to migrate your vocab (API key must be re-pasted).",
+    "ja": "JSON バックアップをダウンロード。新しい端末に拡張機能をインストール後、このファイルをインポートすれば語彙データを移行できます（API キーは再設定が必要）。",
+    "ko": "JSON 백업을 다운로드합니다. 새 기기에 확장 프로그램을 설치한 후 이 파일을 가져오면 단어장이 이전됩니다 (API 키는 다시 붙여넣기 필요).",
+    "fr": "Téléchargez une sauvegarde JSON. Sur un nouvel appareil, installez l'extension et importez ce fichier pour migrer le vocabulaire (la clé API doit être recollée).",
+    "de": "JSON-Sicherung herunterladen. Auf einem neuen Gerät die Erweiterung installieren und diese Datei importieren, um den Wortschatz zu übertragen (API-Schlüssel muss neu eingefügt werden).",
+    "es": "Descarga una copia JSON. En un nuevo dispositivo, instala la extensión e importa este archivo para migrar el vocabulario (la clave API debe pegarse de nuevo)."
+  },
+  "popup.backup.imported": {
+    "zh": "✓ 已导入 {words} 个词、{events} 条历史",
+    "en": "✓ Imported {words} words, {events} events",
+    "ja": "✓ {words} 語、{events} 件の履歴をインポートしました",
+    "ko": "✓ {words}개 단어, {events}개 기록 가져왔습니다",
+    "fr": "✓ {words} mots et {events} événements importés",
+    "de": "✓ {words} Wörter und {events} Ereignisse importiert",
+    "es": "✓ {words} palabras y {events} eventos importados"
+  },
+  "popup.backup.exportFailed": {
+    "zh": "导出失败",
+    "en": "Export failed",
+    "ja": "エクスポート失敗",
+    "ko": "내보내기 실패",
+    "fr": "Échec de l'exportation",
+    "de": "Export fehlgeschlagen",
+    "es": "Error al exportar"
+  },
+  "popup.backup.importFailed": {
+    "zh": "导入失败",
+    "en": "Import failed",
+    "ja": "インポート失敗",
+    "ko": "가져오기 실패",
+    "fr": "Échec de l'importation",
+    "de": "Import fehlgeschlagen",
+    "es": "Error al importar"
+  },
+  "popup.backup.invalidFile": {
+    "zh": "文件格式不对（需要是 VocabRadar 导出的 JSON）",
+    "en": "Invalid file (needs to be a VocabRadar export JSON)",
+    "ja": "ファイル形式が不正です（VocabRadar がエクスポートした JSON が必要）",
+    "ko": "파일 형식이 잘못되었습니다 (VocabRadar에서 내보낸 JSON 필요)",
+    "fr": "Fichier invalide (doit être un JSON exporté par VocabRadar)",
+    "de": "Ungültige Datei (muss VocabRadar-Export-JSON sein)",
+    "es": "Archivo inválido (debe ser un JSON exportado de VocabRadar)"
   }
 }

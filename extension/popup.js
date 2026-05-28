@@ -20,6 +20,10 @@ const $keyStatus = $('keyStatus');
 const $sourceLang = $('sourceLang');
 const $targetLang = $('targetLang');
 const $translatePhrases = $('translatePhrases');
+const $btnExport = $('btnExport');
+const $btnImport = $('btnImport');
+const $importFile = $('importFile');
+const $backupStatus = $('backupStatus');
 
 let supportedLangs = [];
 let currentSettings = null;
@@ -184,6 +188,78 @@ $translatePhrases.addEventListener('change', async () => {
 });
 
 $btnRefresh.addEventListener('click', loadStats);
+
+// ====== 备份与迁移 ======
+
+function setBackupStatus(text, kind) {
+  if (!text) { $backupStatus.hidden = true; return; }
+  $backupStatus.hidden = false;
+  $backupStatus.textContent = text;
+  $backupStatus.className = 'status-msg ' + (kind || '');
+}
+
+$btnExport.addEventListener('click', async () => {
+  $btnExport.disabled = true;
+  setBackupStatus('', '');
+  try {
+    const resp = await send('exportAll');
+    if (!resp?.ok) {
+      setBackupStatus(_t('popup.backup.exportFailed') + ': ' + (resp?.error || ''), 'err');
+      return;
+    }
+    const blob = new Blob([JSON.stringify(resp.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vocab-radar-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    // 刷新统计（导出本身不改数据，但用户看见数字提醒自己刚操作）
+    loadStats();
+  } catch (e) {
+    setBackupStatus(_t('popup.backup.exportFailed') + ': ' + (e.message || e), 'err');
+  } finally {
+    $btnExport.disabled = false;
+  }
+});
+
+$btnImport.addEventListener('click', () => $importFile.click());
+
+$importFile.addEventListener('change', async () => {
+  const file = $importFile.files?.[0];
+  if (!file) return;
+  $btnImport.disabled = true;
+  setBackupStatus('', '');
+  try {
+    const text = await file.text();
+    let payload;
+    try { payload = JSON.parse(text); }
+    catch { setBackupStatus(_t('popup.backup.invalidFile'), 'err'); return; }
+    if (!payload || !Array.isArray(payload.words)) {
+      setBackupStatus(_t('popup.backup.invalidFile'), 'err');
+      return;
+    }
+    const resp = await send('importAll', { payload });
+    if (!resp?.ok) {
+      setBackupStatus(_t('popup.backup.importFailed') + ': ' + (resp?.error || ''), 'err');
+      return;
+    }
+    const { imported_words, imported_events } = resp.data || {};
+    setBackupStatus(
+      _t('popup.backup.imported', { words: imported_words || 0, events: imported_events || 0 }),
+      'ok',
+    );
+    // 重新拉统计反映导入后的状态
+    loadStats();
+  } catch (e) {
+    setBackupStatus(_t('popup.backup.importFailed') + ': ' + (e.message || e), 'err');
+  } finally {
+    $btnImport.disabled = false;
+    $importFile.value = '';  // 允许再次选同一个文件
+  }
+});
 
 (async function main() {
   await loadSettings();

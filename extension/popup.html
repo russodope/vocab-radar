@@ -158,6 +158,18 @@
       <div class="hint" data-i18n="popup.behavior.phrases.hint">关闭后，drag-select 一整段不会触发翻译；连字符词（如 no-brainer）不受影响。</div>
     </div>
 
+    <!-- 备份与迁移 -->
+    <div class="section">
+      <div class="section-title" data-i18n="popup.section.backup">备份与迁移</div>
+      <div class="row" style="gap: 8px;">
+        <button id="btnExport" data-i18n="popup.action.export">导出词库</button>
+        <button id="btnImport" data-i18n="popup.action.import">导入词库</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
+      </div>
+      <div class="status-msg" id="backupStatus" hidden></div>
+      <div class="hint" data-i18n="popup.backup.hint">下载 JSON 备份；新设备装好扩展后导入此文件即可迁移词库（API key 需重新粘贴）。</div>
+    </div>
+
     <script type="module" src="popup.js"></script>
   </body>
 </html>
