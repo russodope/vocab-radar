@@ -70,17 +70,32 @@ You can change the key (and language pair) any time from the toolbar VocabRadar 
 | Action | Behavior |
 |---|---|
 | **Double-click** an English word | Lookup popup → DeepSeek streams a definition + example |
-| **Drag-select** a phrase (e.g. `no-brainer`) | Same as above |
+| **Drag-select** a phrase (e.g. `no-brainer`) | Same as above (phrase translation can be turned off in popup) |
 | Click "Got it" in popup | Marked as `familiar` — no longer highlighted |
 | Click "Mastered" in popup | Marked as `graduated` — never highlighted again |
-| Click "Skip" in popup | Removed from vocab entirely (use this for accidental triggers) |
-| Hover a highlighted word | Brief tooltip with the cached definition (300 ms delay) |
-| Click the toolbar icon | See stats + change settings |
+| Click "Skip" in popup | **Removed from vocab entirely** (for accidental triggers) |
+| Hover a highlighted word | Brief tooltip with the cached definition (300 ms delay; no API call) |
+| Click the toolbar icon | See stats + change BYOK key / language pair / behavior / backup |
 
 ### Highlight tiers
 
 - **Light yellow** `#FFF3B0` — words looked up 1–2 times (`learning` state)
 - **Deep orange** `#FFD580` — words looked up ≥ 3 times (the "stuck words" you want to focus on)
+
+### Auto-demotion on re-lookup
+
+If you've marked a word as `familiar` or `graduated`, looking it up **again** is a strong signal you didn't actually master it. The status automatically falls back to `learning` and highlighting resumes.
+
+### Backup / device migration
+
+The popup's "Backup & Migration" section has two buttons:
+
+- **Export** — downloads `vocab-radar-YYYY-MM-DD.json` containing every word + lookup history
+- **Import** — pick a JSON file; vocab merges into the current device
+
+To switch machines: export on old → transfer the file → install extension on new → paste key → import. A few minutes total.
+
+> The API key and language preferences are *not* in the export (they're device-level settings). You'll paste the key once on the new device.
 
 ---
 
@@ -148,9 +163,8 @@ UI labels (popup + lookup popup) follow the chosen *definition* language.
 
 - [x] **v0.1** — FastAPI backend + extension end-to-end (deprecated)
 - [x] **v0.2** — Client-only refactor; backend deleted; BYOK; 7×7 languages
-- [x] **v0.2.x** — UX polish: phrase toggle, delete button, cache short-circuit, max_tokens cap, lang-aware cache, auto-reinject on update
-- [ ] **v0.3** — Auto-decay (`familiar` words untouched for 30 days drop back to `learning`)
-- [ ] **v0.3** — JSON export / import for backup or device migration
+- [x] **v0.2.x** — UX polish: phrase toggle, delete button, cache short-circuit, max_tokens cap, lang-aware cache, auto-reinject on update, state-machine auto-demotion, JSON export/import
+- [ ] **v0.3** — Time-based auto-decay (`familiar` words untouched for 30 days drop back to `learning`)
 - [ ] **v0.4 ?** — Chrome Web Store listing
 - [ ] **v0.4 ?** — Web dashboard (vocab growth charts, search, batch edit)
 
