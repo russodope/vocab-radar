@@ -13,6 +13,7 @@
 
   // ========== 配置 ==========
   const MAX_WORD_LEN = 50;
+  const MAX_SELECTION_LEN = 1000;
   // 单词或短语：英文字母、连字符、撇号、空格；不接受标点/换行
   const VALID_RE = /^[A-Za-z][A-Za-z\s'\-]{0,49}$/;
 
@@ -204,6 +205,27 @@
     if (el) el.textContent = text;
   }
 
+  function setLookupMode(mode) {
+    const panel = popupRoot?.querySelector('.panel');
+    if (!panel) return;
+    const isSelection = mode === 'selection';
+    const badge = panel.querySelector('[data-role="badge"]');
+    const definitionLabel = panel.querySelector('[data-role="definition"]')?.parentElement?.querySelector('.label');
+    const inContextSection = panel.querySelector('[data-role="in-context"]')?.parentElement;
+    const exampleSection = panel.querySelector('[data-role="example"]')?.parentElement;
+    const knownButton = panel.querySelector('[data-role="known"]');
+    const graduatedButton = panel.querySelector('[data-role="graduated"]');
+    const deleteButton = panel.querySelector('[data-role="delete"]');
+
+    if (badge) badge.hidden = isSelection;
+    if (definitionLabel) definitionLabel.textContent = isSelection ? '翻译' : t('lookup.label.definition');
+    if (inContextSection) inContextSection.hidden = isSelection;
+    if (exampleSection) exampleSection.hidden = isSelection;
+    if (knownButton) knownButton.hidden = isSelection;
+    if (graduatedButton) graduatedButton.hidden = isSelection;
+    if (deleteButton) deleteButton.hidden = isSelection;
+  }
+
   function setBadge(meta) {
     const badge = popupRoot?.querySelector('[data-role="badge"]');
     if (!badge) return;
@@ -249,7 +271,13 @@
       .replace(/\\\\/g, '\\');
   }
 
-  function renderProgressive(contentBuf, word) {
+  function renderProgressive(contentBuf, word, mode) {
+    if (mode === 'selection') {
+      const translation = extractField(contentBuf, 'translation');
+      if (translation && translation.length) setText('definition', translation);
+      return;
+    }
+
     const def = extractField(contentBuf, 'definition');
     if (def && def.length) {
       setText('definition', def);
@@ -263,11 +291,12 @@
   }
 
   // ========== SSE 主流程 ==========
-  function startTranslate(word, context, rect) {
+  function startTranslate(word, context, rect, mode = 'word') {
     closePopup();
     hideTooltip();
     ensurePopup();
     placePopup(rect);
+    setLookupMode(mode);
     popupRoot.querySelector('.word').textContent = word;
     currentWord = word;
 
@@ -352,7 +381,7 @@
         if (typeof delta === 'string' && delta.length) {
           contentBuffer += delta;
           receivedAnyContent = true;
-          renderProgressive(contentBuffer, word);
+          renderProgressive(contentBuffer, word, mode);
         }
       }
     });
@@ -361,6 +390,7 @@
       type: 'start',
       payload: {
         word,
+        mode,
         context,
         sourceUrl: location.href,
         pageTitle: document.title,
@@ -436,7 +466,8 @@
       if (!sel || sel.isCollapsed) return;
 
       // 先扩展再校验，"no-brainer" 这种通过双击也能查
-      let text = expandHyphenated(sel);
+      let text = isDoubleClick ? expandHyphenated(sel) : sel.toString().replace(/\s+/g, ' ').trim();
+      const mode = isDoubleClick ? 'word' : 'selection';
 
       // 双击只允许单词。某些页面/字体/NBSP 会让浏览器把两个词当一个选中；
       // 这里只取第一个空白前的部分，避免把 "nails the" 这种存进库。
@@ -444,11 +475,17 @@
         text = text.split(/\s+/)[0];
       }
 
-      if (!text || text.length > MAX_WORD_LEN) return;
-      if (!VALID_RE.test(text)) return;
+      if (!text) return;
+      if (mode === 'word') {
+        if (text.length > MAX_WORD_LEN) return;
+        if (!VALID_RE.test(text)) return;
+      } else {
+        if (text.length > MAX_SELECTION_LEN) return;
+        if (!/[A-Za-z]/.test(text)) return;
+      }
 
       // 多词短语开关（连字符复合词不含空白，不受此约束）
-      if (cachedSettings.translatePhrases === false && /\s/.test(text)) return;
+      if (mode === 'word' && cachedSettings.translatePhrases === false && /\s/.test(text)) return;
 
       // 排除在 input/textarea/可编辑区/code/pre 里的选择
       const anchor = sel.anchorNode?.parentElement;
@@ -460,7 +497,7 @@
       if (!rect || (rect.width === 0 && rect.height === 0)) return;
 
       const context = extractContextSentence(sel);
-      startTranslate(text, context, rect);
+      startTranslate(text, context, rect, mode);
     }, 0);
   }
 

@@ -29,25 +29,30 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onMessage.addListener(async (msg) => {
     if (msg?.type !== 'start') return;
-    const { word, context, sourceUrl, pageTitle } = msg.payload || {};
+    const { word, context, sourceUrl, pageTitle, mode } = msg.payload || {};
+    const isSelection = mode === 'selection';
 
     try {
+      const settings = await getSettings();
       // 1) 写 lookup_events + upsert words（与原后端 /translate 同序）
-      await logLookupEvent({ word, context, sourceUrl, pageTitle });
-      const upsertResult = await upsertWord({ word, context, sourceUrl });
-      const meta = { status: upsertResult.status, lookup_count: upsertResult.lookup_count };
-      const cachedTranslation = upsertResult.cachedTranslation;
-      const cachedTranslationLang = upsertResult.cachedTranslationLang;
-      if (upsertResult.demoted) {
-        console.log(`[VocabRadar] 自动降级 word="${word}" 已认识/已掌握 → learning（用户又在查）`);
-      }
+      let cachedTranslation = null;
+      let cachedTranslationLang = null;
+      if (!isSelection) {
+        await logLookupEvent({ word, context, sourceUrl, pageTitle });
+        const upsertResult = await upsertWord({ word, context, sourceUrl });
+        const meta = { status: upsertResult.status, lookup_count: upsertResult.lookup_count };
+        cachedTranslation = upsertResult.cachedTranslation;
+        cachedTranslationLang = upsertResult.cachedTranslationLang;
+        if (upsertResult.demoted) {
+          console.log(`[VocabRadar] 自动降级 word="${word}" 已认识/已掌握 → learning（用户又在查）`);
+        }
 
-      // 2) 把 meta 包成 SSE 格式发给 content.js（保持原协议不变）
-      port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify({ meta })}\n\n` });
+        // 2) 把 meta 包成 SSE 格式发给 content.js（保持原协议不变）
+        port.postMessage({ type: 'chunk', data: `data: ${JSON.stringify({ meta })}\n\n` });
+      }
 
       // 2.5) 缓存命中：仅当**翻译时的目标语言**和当前用户偏好一致才用缓存
       //      用户切换 targetLang 后，旧 lang 的缓存失效 → 重新调 DeepSeek
-      const settings = await getSettings();
       if (cachedTranslation && cachedTranslationLang === settings.targetLang) {
         const fakeChunk = {
           choices: [{ delta: { content: cachedTranslation }, finish_reason: 'stop' }],
@@ -82,7 +87,7 @@ chrome.runtime.onConnect.addListener((port) => {
       let lineCount = 0;
       const t0 = Date.now();
       try {
-        for await (const line of streamTranslate({ word, context, settings })) {
+        for await (const line of streamTranslate({ word, context, settings, mode })) {
           if (aborted) break;
           lineCount++;
           if (line === 'data: [DONE]') continue; // 我们自己最后单发
@@ -121,7 +126,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
       // 5) 落库 translation（fire-and-forget；失败不影响用户）
       const full = contentBuffer.join('').trim();
-      if (full && !aborted) {
+      if (full && !aborted && !isSelection) {
         try {
           JSON.parse(full); // 验证完整 JSON
           await saveTranslation(word, full, settings.targetLang);

@@ -24,6 +24,19 @@ function buildPrompt(word, context, sourceLang, targetLang) {
   );
 }
 
+function buildSelectionPrompt(text, context, sourceLang, targetLang) {
+  const src = langDisplayName(sourceLang);
+  const tgt = langDisplayName(targetLang);
+  return (
+    `用户正在阅读${src}网页，划选了一段文本。请结合当前语境，用${tgt}给出自然、准确的翻译。\n` +
+    `只翻译划选文本本身；如果需要消解指代或选择词义，请依据原句/上下文。\n\n` +
+    `划选文本: ${text}\n` +
+    `原句/上下文: ${context}\n\n` +
+    `以 JSON 格式返回，字段顺序固定如下：\n` +
+    `{"translation": "..."}`
+  );
+}
+
 const SYSTEM_PROMPT = '你是一个专业的语言词汇助教，输出严格 JSON。';
 
 function assertValidUrl(url, base) {
@@ -68,7 +81,7 @@ export async function testApiKey({ apiKey, apiBaseUrl, model }) {
 }
 
 // 流式翻译：返回一个 ReadableStream-like 异步迭代器，逐行 yield 原始 SSE 文本（"data: ..." 单行）
-export async function* streamTranslate({ word, context, settings }) {
+export async function* streamTranslate({ word, context, settings, mode }) {
   const { apiKey, apiBaseUrl, model, sourceLang, targetLang } = settings;
   if (!apiKey) throw new Error('未设置 DeepSeek API key');
 
@@ -86,7 +99,12 @@ export async function* streamTranslate({ word, context, settings }) {
     thinking: { type: 'disabled' },
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildPrompt(word, context || '', sourceLang, targetLang) },
+      {
+        role: 'user',
+        content: mode === 'selection'
+          ? buildSelectionPrompt(word, context || '', sourceLang, targetLang)
+          : buildPrompt(word, context || '', sourceLang, targetLang),
+      },
     ],
   };
 
