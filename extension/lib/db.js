@@ -136,15 +136,35 @@ export async function saveTranslation(word, translationJson, targetLang) {
   await txDone(tx);
 }
 
+// 残留词判定：单字母（s/t/a/I/m/d）+ 撇号缩写尾（ll/re/ve）。
+// 这些是 It's / we'll / you're / I've 被浏览器拆开后存进库的噪声，无学习价值。
+const CONTRACTION_TAILS = new Set(['ll', 're', 've']);
+function isResidueWord(word) {
+  if (!word) return false;
+  const w = String(word).trim().toLowerCase();
+  if (w.length === 1) return true;
+  return CONTRACTION_TAILS.has(w);
+}
+
 // ---- list_learning_words: 用于高亮扫描
+// 顺手自愈：把历史遗留的残留词（早期版本误存的 's 的 s 等）从库里删掉，且不返回它们。
 export async function listLearningWords() {
   const db = await getDb();
-  const tx = db.transaction(['words'], 'readonly');
-  const store = tx.objectStore('words');
-  const idx = store.index('status');
-  const rows = await reqAsPromise(idx.getAll('learning'));
-  rows.sort((a, b) => (b.lookup_count || 0) - (a.lookup_count || 0));
-  return rows.map((r) => ({
+  const rows = await reqAsPromise(
+    db.transaction(['words'], 'readonly').objectStore('words').index('status').getAll('learning'),
+  );
+
+  const residues = rows.filter((r) => isResidueWord(r.word));
+  if (residues.length > 0) {
+    const tx = db.transaction(['words'], 'readwrite');
+    const store = tx.objectStore('words');
+    for (const r of residues) store.delete(r.word);
+    await txDone(tx);
+  }
+
+  const clean = rows.filter((r) => !isResidueWord(r.word));
+  clean.sort((a, b) => (b.lookup_count || 0) - (a.lookup_count || 0));
+  return clean.map((r) => ({
     word: r.word,
     lookup_count: r.lookup_count || 0,
     translation: r.translation || null,
