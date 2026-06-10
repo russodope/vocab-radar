@@ -422,6 +422,22 @@
     return expanded || original;
   }
 
+  // 选区起点是否紧跟在撇号后（识别 It's 的 s、don't 的 t 等缩写残留）
+  function precededByApostrophe(selection) {
+    try {
+      if (selection.rangeCount === 0) return false;
+      const range = selection.getRangeAt(0);
+      const node = range.startContainer;
+      if (node.nodeType !== Node.TEXT_NODE) return false;
+      const i = range.startOffset;
+      if (i <= 0) return false;
+      const ch = node.nodeValue[i - 1];
+      return ch === "'" || ch === '’' || ch === 'ʼ';
+    } catch {
+      return false;
+    }
+  }
+
   // ========== 划词监听 ==========
   function onMouseUp(e) {
     // 点击在弹窗内不触发
@@ -446,6 +462,11 @@
 
       if (!text || text.length > MAX_WORD_LEN) return;
       if (!VALID_RE.test(text)) return;
+
+      // 单字母词无学习价值（a/I/s/t...），直接忽略
+      if (text.length === 1) return;
+      // 撇号缩写残留（It's 的 s、we'll 的 ll、you're 的 re...）：选区紧跟撇号 → 忽略
+      if (precededByApostrophe(sel)) return;
 
       // 多词短语开关（连字符复合词不含空白，不受此约束）
       if (cachedSettings.translatePhrases === false && /\s/.test(text)) return;
@@ -733,13 +754,8 @@
 
   function removeHighlightsByWord(word) {
     const key = word.toLowerCase();
-    const spans = document.querySelectorAll(`span.${HIGHLIGHT_CLASS}[data-vr-word="${CSS.escape(key)}"]`);
-    spans.forEach((s) => {
-      const t = document.createTextNode(s.textContent);
-      s.parentNode.replaceChild(t, s);
-    });
     hideTooltip();
-    // 同步从 scanContext 中也移除，避免 MutationObserver 后续重扫又把它包回去
+    // 1) 先更新 scanContext：即便 observer 随后触发，新 regex 也不再匹配这个词
     if (scanContext) {
       delete scanContext.lookupMap[key];
       delete (scanContext.translationMap || {})[key];
@@ -751,6 +767,15 @@
         scanContext.regex = new RegExp('\\b(' + sorted.map(escapeRegex).join('|') + ')\\b', 'gi');
       }
     }
+    // 2) 暂停观察器再改 DOM —— 否则 replaceChild 产生的文本节点会被排进重扫队列，
+    //    在 scanContext 旧 regex 还没失效的窗口里把刚删的词又包回去
+    if (mutationObserver) mutationObserver.disconnect();
+    const spans = document.querySelectorAll(`span.${HIGHLIGHT_CLASS}[data-vr-word="${CSS.escape(key)}"]`);
+    spans.forEach((s) => {
+      const t = document.createTextNode(s.textContent);
+      s.parentNode.replaceChild(t, s);
+    });
+    if (mutationObserver) mutationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   // ========== Hover tooltip ==========
